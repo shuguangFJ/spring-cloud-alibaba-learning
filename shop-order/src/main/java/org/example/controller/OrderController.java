@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.OrderApplication;
 import org.example.domain.Order;
 import org.example.domain.Product;
-import org.example.service.OrderService;
+import org.example.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Random;
 
-@RestController
+//@RestController
 @Slf4j
 public class OrderController {
 
@@ -29,8 +29,48 @@ public class OrderController {
     @Autowired
     private DiscoveryClient discoveryClient;
 
+    @Autowired
+    private ProductService productService;
+
     @GetMapping("/order/prod/{pid}")
     public Order order(@PathVariable("pid") Integer pid) {
+        log.info("pid:" + pid);
+        Product product = productService.getById(pid);
+        log.info("product:" + JSON.toJSONString(product));
+
+        Order order = new Order();
+        order.setUid(1);
+        order.setUsername("test");
+        order.setPid(product.getPid());
+        order.setPname(product.getPname());
+        order.setPprice(product.getPprice());
+        order.setNumber(1);
+
+        orderService.save(order);
+        return order;
+    }
+
+
+    @GetMapping("/order4/prod/{pid}")
+    public Order order4(@PathVariable("pid") Integer pid) {
+        log.info("pid:" + pid);
+        Product product = restTemplate.getForObject("http://service-product/product/" + pid, Product.class);
+        log.info("product:" + JSON.toJSONString(product));
+
+        Order order = new Order();
+        order.setUid(1);
+        order.setUsername("test");
+        order.setPid(product.getPid());
+        order.setPname(product.getPname());
+        order.setPprice(product.getPprice());
+        order.setNumber(1);
+
+        orderService.save(order);
+        return order;
+    }
+
+    @GetMapping("/order3/prod/{pid}")
+    public Order order3(@PathVariable("pid") Integer pid) {
         int size = discoveryClient.getInstances("service-product").size();
         int i = new Random().nextInt(size);
         ServiceInstance serviceInstance = discoveryClient.getInstances("service-product").get(i);
